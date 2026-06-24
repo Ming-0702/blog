@@ -36,6 +36,27 @@ npm run dev
 
 访问 http://localhost:5173
 
+### 4. 启动 MCP Server（可选）
+
+MCP Server 让 AI Agent（如 Claude Code）可以直接管理博客：
+
+```bash
+cd backend
+source venv/bin/activate
+python -m app.mcp_server
+```
+
+连接后可用工具：
+- `list_posts` / `get_post` / `search_posts` — 查看文章
+- `create_post` / `update_post` / `delete_post` — 管理文章
+- `list_comments` / `blog_stats` / `get_user_info` — 查看评论/统计/用户
+
+### 一键启动（Docker）
+
+```bash
+docker compose up --build
+```
+
 ## 项目结构
 
 ```
