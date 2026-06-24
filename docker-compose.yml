@@ -34,6 +34,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  mcp-server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8100:8100"
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/blog"
+      DATABASE_URL_SYNC: "postgresql+psycopg2://postgres:postgres@db:5432/blog"
+    command: python -m app.mcp_server --transport sse --port 8100
+    depends_on:
+      - db
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
