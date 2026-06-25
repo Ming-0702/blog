@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { List, Card, Spin, Pagination, Typography, Skeleton } from 'antd';
+import { List, Card, Spin, Pagination, Typography, Input, Skeleton } from 'antd';
 import { EyeOutlined, LikeOutlined, MessageOutlined } from '@ant-design/icons';
 import { postsAPI } from '../api/client';
 
@@ -12,24 +12,29 @@ export default function PostList() {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [searchText, setSearchText] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
-    postsAPI.list({page,page_size:10})
+    postsAPI.list({page,page_size:10,q:searchText})
       .then(r=>{setPosts(r.data?.items||[]);setTotal(r.data?.total||0)})
       .catch(()=>{}).finally(()=>setLoading(false));
-  }, [page]);
+  }, [page, searchText]);
+
+  const handleSearch = v => { setSearchText(v); setPage(1); };
 
   return (
     <div style={{maxWidth:800,margin:'0 auto',padding:'32px 16px'}}>
       <h1 style={{fontFamily:"'Noto Serif SC',serif",fontSize:28,color:'#4A3728',marginBottom:24}}>📚 全部文章</h1>
+      <Input.Search placeholder="🔍 搜索文章标题或摘要..." allowClear onSearch={handleSearch} style={{maxWidth:400,marginBottom:24}} size="large"/>
+
       {loading && posts.length===0 ? (
         <div style={{display:'flex',flexDirection:'column',gap:16}}>
           {[1,2,3].map(i=><Card key={i} style={{border:'none'}}><Skeleton active/></Card>)}
         </div>
       ) : posts.length===0 ? (
-        <div style={{textAlign:'center',padding:60,color:'#A0937D'}}>还没有文章</div>
+        <div style={{textAlign:'center',padding:60,color:'#A0937D'}}>{searchText?'没有找到相关文章':'还没有文章'}</div>
       ) : (
         <List dataSource={posts} renderItem={post=>(
           <Card hoverable style={{marginBottom:16,border:'none',background:'#FFF'}} onClick={()=>navigate(`/posts/${post.id}`)}>

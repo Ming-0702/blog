@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Typography, Spin, List, Tag, Skeleton, Space } from 'antd';
+import { Card, Row, Col, Typography, Spin, Input, List, Tag, Skeleton, Space } from 'antd';
 import { EyeOutlined, LikeOutlined, MessageOutlined, CrownOutlined } from '@ant-design/icons';
 import { postsAPI } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
@@ -47,15 +47,16 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hotPosts, setHotPosts] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const { user, isAuthor } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
-    postsAPI.list({page:1,page_size:10})
+    postsAPI.list({page:1,page_size:10,q:searchText})
       .then(r=>setPosts(r.data?.items||[])).catch(()=>{}).finally(()=>setLoading(false));
     postsAPI.hot({limit:5}).then(r=>setHotPosts(r.data||[])).catch(()=>{});
-  }, []);
+  }, [searchText]);
 
   return (
     <div>
@@ -88,7 +89,7 @@ export default function Home() {
           </div>
         )}
 
-        <Title level={3} style={{fontFamily:"'Noto Serif SC',serif",marginBottom:20,display:'flex',alignItems:'center',gap:8}}>📝 最新文章</Title>
+        <Title level={3} style={{fontFamily:"'Noto Serif SC',serif",marginBottom:20,display:'flex',alignItems:'center',gap:8}}>📝 {searchText?'搜索结果':'最新文章'}</Title>
 
         {loading ? (
           <Row gutter={[24,24]}>
@@ -100,7 +101,7 @@ export default function Home() {
           </Row>
         )}
 
-        {!loading&&posts.length===0&&<div style={{textAlign:'center',padding:40,color:'#A0937D'}}>还没有文章，敬请期待 🌿</div>}
+        {!loading&&posts.length===0&&<div style={{textAlign:'center',padding:40,color:'#A0937D'}}>{searchText?'没有找到相关文章':'还没有文章，敬请期待 🌿'}</div>}
       </div>
     </div>
   );
