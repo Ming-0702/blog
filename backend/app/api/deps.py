@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.security import decode_access_token
+from app.core.config import settings
 from app.models import User
 
 bearer_scheme = HTTPBearer()
@@ -30,3 +31,12 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
 
     return user
+
+
+async def get_author_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """仅允许博客作者访问"""
+    if current_user.username != settings.AUTHOR_USERNAME:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="仅博客作者可执行此操作")
+    return current_user

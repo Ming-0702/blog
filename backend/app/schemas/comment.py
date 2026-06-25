@@ -9,15 +9,20 @@ class CommentCreate(BaseModel):
     parent_id: Optional[int] = None
 
 
+class CommentUpdate(BaseModel):
+    content: str
+
+
 class CommentOut(BaseModel):
     id: int
     content: str
     post_id: int
     author_id: int
+    author_name: str = ""
+    author_avatar: str = ""
     parent_id: Optional[int] = None
     like_count: int
     created_at: datetime
-    # 嵌套回复（楼中楼）
     replies: List["CommentOut"] = []
 
     model_config = {"from_attributes": True}

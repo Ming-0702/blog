@@ -44,8 +44,15 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const setAuth = (token, userData) => {
+    localStorage.setItem('token', token);
+    setUser(userData);
+  };
+
+  const isAuthor = user?.username === 'lg鹿铭';
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthor, login, register, logout, setAuth }}>
       {children}
     </AuthContext.Provider>
   );

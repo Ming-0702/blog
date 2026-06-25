@@ -22,6 +22,8 @@ class UserOut(BaseModel):
     nickname: str
     avatar_url: str
     bio: str
+    github_id: Optional[int] = None
+    github_username: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

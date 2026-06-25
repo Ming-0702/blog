@@ -20,6 +20,6 @@ class Comment(Base):
     # 关系
     post = relationship("Post", back_populates="comments")
     author = relationship("User", back_populates="comments")
-    replies = relationship("Comment", back_populates="parent", cascade="all, delete-orphan", remote_side=[id])
+    replies = relationship("Comment", back_populates="parent", cascade="all, delete-orphan")
     parent = relationship("Comment", back_populates="replies", remote_side=[id])
-    likes = relationship("Like", back_populates="comment", cascade="all, delete-orphan")
+    # likes 是多态关联（target_type + target_id），通过查询获取，不定义 ORM relationship

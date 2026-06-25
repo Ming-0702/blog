@@ -20,6 +20,19 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
+    # 博客作者（唯一可发布文章的用户）
+    AUTHOR_USERNAME: str = "lg鹿铭"
+
+    # AI 摘要（OpenAI 兼容 API）
+    AI_API_KEY: str = ""
+    AI_API_URL: str = "https://api.openai.com/v1"
+    AI_MODEL: str = "gpt-3.5-turbo"
+
+    # GitHub OAuth
+    GITHUB_CLIENT_ID: str = ""
+    GITHUB_CLIENT_SECRET: str = ""
+    GITHUB_REDIRECT_URI: str = "http://localhost:5173/auth/github/callback"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

@@ -10,6 +10,8 @@ class PostCreate(BaseModel):
     summary: Optional[str] = ""
     cover_image: Optional[str] = ""
     status: Optional[str] = "published"
+    is_pinned: bool = False
+    tags: list[str] = []
 
 
 class PostUpdate(BaseModel):
@@ -18,39 +20,27 @@ class PostUpdate(BaseModel):
     summary: Optional[str] = None
     cover_image: Optional[str] = None
     status: Optional[str] = None
+    is_pinned: Optional[bool] = None
+    tags: Optional[list[str]] = None
 
 
 class PostOut(BaseModel):
-    id: int
-    title: str
-    content: str
-    summary: str
-    cover_image: str
-    status: str
-    view_count: int
-    like_count: int
-    comment_count: int
-    author_id: int
-    created_at: datetime
-    updated_at: datetime
-
+    id: int; title: str; content: str
+    summary: str; cover_image: str; status: str
+    view_count: int; like_count: int; comment_count: int
+    is_pinned: bool = False
+    author_id: int; created_at: datetime; updated_at: datetime
+    tags: list[str] = []
     model_config = {"from_attributes": True}
 
 
 class PostListOut(BaseModel):
     """列表展示时省略完整 content"""
-    id: int
-    title: str
-    summary: str
-    cover_image: str
-    status: str
-    view_count: int
-    like_count: int
-    comment_count: int
-    author_id: int
-    created_at: datetime
-    updated_at: datetime
-
+    id: int; title: str; summary: str
+    cover_image: str; status: str
+    view_count: int; like_count: int; comment_count: int
+    is_pinned: bool = False
+    tags: list[str] = []
     model_config = {"from_attributes": True}
 
 
