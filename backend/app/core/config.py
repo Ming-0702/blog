@@ -43,11 +43,6 @@ class Settings(BaseSettings):
     # GitHub Trending
     GITHUB_TRENDING_SCHEDULE: str = "0 9 * * *"  # 每天早上9点
 
-    # Arxiv 论文
-    ARXIV_CATEGORIES: str = "cs.AI,cs.CL,cs.CV,cs.LG"
-    ARXIV_MAX_RESULTS: int = 20
-    ARXIV_SCHEDULE: str = "0 18 * * *"  # 每天下午6点
-
     # 数据保留天数（超过自动清理）
     AUTOMATION_RETENTION_DAYS: int = 15
 

@@ -89,8 +89,5 @@ export const automationAPI = {
   listTrending: (params) => api.get('/automation/trending', { params }),
   getTrendingRepo: (id) => api.get(`/automation/trending/${id}`),
   triggerTrending: () => api.post('/automation/trending/trigger'),
-  listPapers: (params) => api.get('/automation/papers', { params }),
-  getPaper: (id) => api.get(`/automation/papers/${id}`),
-  triggerPapers: () => api.post('/automation/papers/trigger'),
   getStatus: () => api.get('/automation/status'),
 };

@@ -41,7 +41,6 @@ export default function Navbar() {
     { key: '/posts', label: <Link to="/posts">文章</Link>, icon: <ReadOutlined /> },
     { key: '/digests', label: <Link to="/digests">资讯摘要</Link>, icon: <RocketOutlined /> },
     { key: '/trending', label: <Link to="/trending">AI趋势</Link>, icon: <FireOutlined /> },
-    { key: '/papers', label: <Link to="/papers">论文速递</Link>, icon: <ExperimentOutlined /> },
     { key: 'random', label: '随机一篇', icon: <ExperimentOutlined />, onClick: handleRandom },
   ];
 

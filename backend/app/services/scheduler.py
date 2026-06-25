@@ -33,7 +33,6 @@ async def _initial_fetch():
 
     from app.services.news_fetcher import NewsFetcher
     from app.services.github_fetcher import GithubFetcher
-    from app.services.arxiv_fetcher import ArxivFetcher
 
     # 检查今天是否已有数据（避免重启重复抓取）
     from datetime import date
@@ -51,7 +50,6 @@ async def _initial_fetch():
             await db.commit()
 
     await NewsFetcher().run()
-    await ArxivFetcher().run()
 
 
 async def _cleanup_old_data():
@@ -62,17 +60,14 @@ async def _cleanup_old_data():
     from sqlalchemy import delete
     from app.models.digest import NewsDigest
     from app.models.trending import TrendingRepo
-    from app.models.paper import PaperDigest
-
     retention = settings.AUTOMATION_RETENTION_DAYS
     cutoff = date.today() - timedelta(days=retention)
 
     async with async_session() as db:
         r1 = await db.execute(delete(NewsDigest).where(NewsDigest.created_at < cutoff))
         r2 = await db.execute(delete(TrendingRepo).where(TrendingRepo.fetched_date < cutoff))
-        r3 = await db.execute(delete(PaperDigest).where(PaperDigest.created_at < cutoff))
         await db.commit()
-        total = (r1.rowcount or 0) + (r2.rowcount or 0) + (r3.rowcount or 0)
+        total = (r1.rowcount or 0) + (r2.rowcount or 0)
         if total:
             import logging
             logging.getLogger(__name__).info(f"Cleanup: deleted {total} records older than {retention} days")
@@ -87,7 +82,6 @@ def init_scheduler():
 
     from app.services.news_fetcher import NewsFetcher
     from app.services.github_fetcher import GithubFetcher
-    from app.services.arxiv_fetcher import ArxivFetcher
 
     # 注册定时任务
     scheduler.add_job(
@@ -102,13 +96,6 @@ def init_scheduler():
         id="github_trending",
         replace_existing=True,
     )
-    scheduler.add_job(
-        ArxivFetcher().run,
-        **_parse_cron(settings.ARXIV_SCHEDULE),
-        id="arxiv_papers",
-        replace_existing=True,
-    )
-
     # 注册数据清理任务（每天凌晨 3 点）
     scheduler.add_job(
         _cleanup_old_data,

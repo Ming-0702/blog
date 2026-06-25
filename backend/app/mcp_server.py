@@ -27,7 +27,6 @@ from app.core.security import hash_password
 from app.models import User, Post, Comment, Like, Tag
 from app.models.digest import NewsDigest
 from app.models.trending import TrendingRepo
-from app.models.paper import PaperDigest
 
 # 创建 MCP Server
 mcp = FastMCP("MyBlog MCP Server", instructions="MyBlog 博客管理工具 - AI Agent 可通过此服务器管理博客内容")
@@ -263,7 +262,6 @@ async def blog_stats() -> str:
         comments_count = (await db.execute(select(func.count()).select_from(Comment))).scalar()
         news_count = (await db.execute(select(func.count()).select_from(NewsDigest))).scalar()
         trending_count = (await db.execute(select(func.count()).select_from(TrendingRepo))).scalar()
-        paper_count = (await db.execute(select(func.count()).select_from(PaperDigest))).scalar()
 
         # 最近文章
         result = await db.execute(
@@ -282,7 +280,6 @@ async def blog_stats() -> str:
             "🤖 自动化数据:",
             f"  📰 资讯摘要: {news_count} 条",
             f"  🔥 Trending 仓库: {trending_count} 个",
-            f"  📄 论文速递: {paper_count} 篇",
             f"  状态: {'✅ 已启用' if settings.AUTOMATION_ENABLED else '❌ 未启用'}",
             "",
             "📌 最近文章:",
@@ -680,77 +677,6 @@ async def trigger_trending_fetch() -> str:
     return f"🔥 GitHub Trending 抓取完成: {result['message']}"
 
 
-@mcp.tool(description="获取 AI 论文速递列表（Arxiv 论文 AI 中文摘要）")
-async def list_paper_digests(
-    page: int = 1,
-    page_size: int = 20,
-    category: str = "",
-) -> str:
-    """列出论文摘要"""
-    async with async_session() as db:
-        q = select(PaperDigest).order_by(desc(PaperDigest.published_date), desc(PaperDigest.id))
-        total_q = select(func.count()).select_from(PaperDigest)
-        if category:
-            q = q.where(PaperDigest.categories.contains([category]))
-            total_q = total_q.where(PaperDigest.categories.contains([category]))
-
-        total = (await db.execute(total_q)).scalar() or 0
-        offset = (page - 1) * page_size
-        result = await db.execute(q.offset(offset).limit(page_size))
-        items = result.scalars().all()
-
-        label = f"（{category}）" if category else ""
-        lines = [f"📄 AI 论文速递{label} — {total} 篇（第 {page} 页）", ""]
-        for p in items:
-            lines.append(f"- [{p.id}] {p.title[:120]}")
-            if p.authors:
-                authors_str = ", ".join(p.authors[:3])
-                if len(p.authors) > 3:
-                    authors_str += f" 等{len(p.authors)}人"
-                lines.append(f"  ✍️ {authors_str}")
-            if p.categories:
-                lines.append(f"  🏷️ {', '.join(p.categories[:3])}")
-            if p.ai_summary_zh:
-                lines.append(f"  🤖 {p.ai_summary_zh[:200]}")
-            else:
-                lines.append(f"  📝 {p.abstract[:150]}")
-            lines.append("")
-        if not items:
-            lines.append("(暂无论文摘要，请先触发抓取)")
-        return "\n".join(lines)
-
-
-@mcp.tool(description="获取单篇论文的完整 AI 摘要")
-async def get_paper_digest(paper_id: int) -> str:
-    """单篇论文详情"""
-    async with async_session() as db:
-        result = await db.execute(select(PaperDigest).where(PaperDigest.id == paper_id))
-        p = result.scalar_one_or_none()
-        if not p:
-            return "❌ 论文不存在"
-        authors_str = ", ".join(p.authors) if p.authors else "未知"
-        cats_str = ", ".join(p.categories) if p.categories else "未分类"
-        return (
-            f"# {p.title}\n\n"
-            f"**Arxiv ID**: {p.arxiv_id}\n"
-            f"**作者**: {authors_str}\n"
-            f"**分类**: {cats_str}\n"
-            f"**发布日期**: {p.published_date.strftime('%Y-%m-%d') if p.published_date else '未知'}\n"
-            f"**链接**: {p.paper_url}\n"
-            f"**PDF**: {p.pdf_url or '无'}\n\n"
-            f"## AI 中文摘要\n\n{p.ai_summary_zh or '(无 AI 摘要，请检查 AI_API_KEY 配置)'}\n\n"
-            f"## 原文摘要\n\n{p.abstract or '(无)'}"
-        )
-
-
-@mcp.tool(description="手动触发 Arxiv 论文抓取和 AI 摘要生成")
-async def trigger_paper_fetch() -> str:
-    """手动触发"""
-    from app.services.arxiv_fetcher import ArxivFetcher
-    result = await ArxivFetcher().run()
-    return f"📄 论文抓取完成: {result['message']}"
-
-
 def main():
     """启动 MCP Server"""
     import argparse
@@ -796,9 +722,6 @@ def main():
     print("    - list_trending_repos: Trending 列表")
     print("    - get_trending_repo  : Trending 详情")
     print("    - trigger_trending_fetch: 触发 Trending 抓取")
-    print("    - list_paper_digests : 论文速递列表")
-    print("    - get_paper_digest   : 论文详情")
-    print("    - trigger_paper_fetch: 触发论文抓取")
     print("  📊 其他:")
     print("    - blog_stats  : 博客统计（含自动化数据）")
     print("")
