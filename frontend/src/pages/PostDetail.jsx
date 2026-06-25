@@ -101,14 +101,13 @@ export default function PostDetail() {
   // 搜索高亮 + 滚动到匹配处
   useEffect(() => {
     if (!searchQuery || !post || loading) return;
-    const timer = setTimeout(() => {
+    let retries = 5;
+    let tid;
+    const doHighlight = () => {
       const body = document.querySelector('.markdown-body');
+      if (!body && retries-- > 0) { tid = setTimeout(doHighlight, 200); return; }
       if (!body) return;
-      // 清除旧高亮
-      body.querySelectorAll('mark.search-hl').forEach(m => {
-        m.replaceWith(m.textContent || '');
-      });
-      // 查找并高亮关键词
+      body.querySelectorAll('mark.search-hl').forEach(m => m.replaceWith(m.textContent || ''));
       const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
       const nodes = [];
       while (walker.nextNode()) nodes.push(walker.currentNode);
@@ -116,23 +115,24 @@ export default function PostDetail() {
       nodes.forEach(node => {
         const idx = node.textContent.toLowerCase().indexOf(searchQuery.toLowerCase());
         if (idx !== -1) {
-          const span = document.createElement('mark');
-          span.className = 'search-hl';
-          const before = node.textContent.slice(0, idx);
-          const match = node.textContent.slice(idx, idx + searchQuery.length);
-          const after = node.textContent.slice(idx + searchQuery.length);
+          const mark = document.createElement('mark');
+          mark.className = 'search-hl';
+          const pre = node.textContent.slice(0, idx);
+          const hit = node.textContent.slice(idx, idx + searchQuery.length);
+          const post = node.textContent.slice(idx + searchQuery.length);
           const frag = document.createDocumentFragment();
-          if (before) frag.appendChild(document.createTextNode(before));
-          span.textContent = match;
-          frag.appendChild(span);
-          if (after) frag.appendChild(document.createTextNode(after));
+          if (pre) frag.appendChild(document.createTextNode(pre));
+          mark.textContent = hit;
+          frag.appendChild(mark);
+          if (post) frag.appendChild(document.createTextNode(post));
           node.parentNode?.replaceChild(frag, node);
-          if (!first) first = span;
+          if (!first) first = mark;
         }
       });
       if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 300);
-    return () => clearTimeout(timer);
+    };
+    tid = setTimeout(doHighlight, 500);
+    return () => clearTimeout(tid);
   }, [post?.id, searchQuery, loading]);
 
   // 阅读进度
