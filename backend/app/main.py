@@ -1,7 +1,7 @@
 """FastAPI 应用主入口"""
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -43,6 +43,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ===== 全局缓存头中间件 =====
+
+@app.middleware("http")
+async def add_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+
+    if path.startswith("/api/v1/posts"):
+        # 搜索和草稿不缓存，其他 GET 请求缓存 60 秒
+        if request.method == "GET" and "/search" not in path and "/drafts" not in path:
+            response.headers["Cache-Control"] = "public, max-age=60"
+        else:
+            response.headers["Cache-Control"] = "no-cache"
+    elif path.startswith("/api/v1/automation"):
+        response.headers["Cache-Control"] = "public, max-age=300"
+    elif path.startswith("/uploads"):
+        response.headers["Cache-Control"] = "public, max-age=86400"
+    else:
+        response.headers["Cache-Control"] = "no-cache"
+
+    return response
+
 
 # 注册路由
 API_PREFIX = "/api/v1"
