@@ -62,6 +62,9 @@ export default function PostDetail() {
   const [commentLikeCounts, setCommentLikeCounts] = useState({});
   const [progress, setProgress] = useState(0);
   const [showBackTop, setShowBackTop] = useState(false);
+  const [matchIndex, setMatchIndex] = useState(0);
+  const [matchTotal, setMatchTotal] = useState(0);
+  const [matchMarks, setMatchMarks] = useState([]);
   const [activeId, setActiveId] = useState('');
   const contentRef = useRef(null);
 
@@ -111,24 +114,36 @@ export default function PostDetail() {
       const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
       const nodes = [];
       while (walker.nextNode()) nodes.push(walker.currentNode);
-      let first = null;
-      nodes.forEach(node => {
-        const idx = node.textContent.toLowerCase().indexOf(searchQuery.toLowerCase());
-        if (idx !== -1) {
+// 在每个文本节点中高亮所有匹配
+      const qLower = searchQuery.toLowerCase();
+      const marks = [];
+      const processNode = (node) => {
+        let text = node.textContent;
+        let idx = text.toLowerCase().indexOf(qLower);
+        if (idx === -1) return;
+        const container = document.createDocumentFragment();
+        let lastIdx = 0;
+        while (idx !== -1) {
+          if (idx > lastIdx) container.appendChild(document.createTextNode(text.slice(lastIdx, idx)));
           const mark = document.createElement('mark');
           mark.className = 'search-hl';
-          const pre = node.textContent.slice(0, idx);
-          const hit = node.textContent.slice(idx, idx + searchQuery.length);
-          const post = node.textContent.slice(idx + searchQuery.length);
-          const frag = document.createDocumentFragment();
-          if (pre) frag.appendChild(document.createTextNode(pre));
-          mark.textContent = hit;
-          frag.appendChild(mark);
-          if (post) frag.appendChild(document.createTextNode(post));
-          node.parentNode?.replaceChild(frag, node);
-          if (!first) first = mark;
+          mark.textContent = text.slice(idx, idx + searchQuery.length);
+          container.appendChild(mark);
+          marks.push(mark);
+          lastIdx = idx + searchQuery.length;
+          idx = text.toLowerCase().indexOf(qLower, lastIdx);
         }
-      });
+        if (lastIdx < text.length) container.appendChild(document.createTextNode(text.slice(lastIdx)));
+        node.parentNode?.replaceChild(container, node);
+      };
+      nodes.forEach(processNode);
+      setMatchMarks(marks);
+      setMatchTotal(marks.length);
+      if (marks.length > 0) {
+        setMatchIndex(0);
+        marks[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        marks[0].classList.add('search-hl-active');
+      }
       if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
     tid = setTimeout(doHighlight, 500);
@@ -275,7 +290,17 @@ export default function PostDetail() {
     );
   };
 
-  const renderCommentContent = (comment) => {
+  const jumpToMatch = (dir) => {
+    const marks = document.querySelectorAll('mark.search-hl');
+    if (!marks.length) return;
+    marks.forEach(m => m.classList.remove('search-hl-active'));
+    const newIdx = Math.max(0, Math.min(marks.length - 1, matchIndex + dir));
+    setMatchIndex(newIdx);
+    marks[newIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    marks[newIdx].classList.add('search-hl-active');
+  };
+
+    const renderCommentContent = (comment) => {
     if (editingId === comment.id) {
       return (
         <div style={{ marginTop: 8 }}>
@@ -503,6 +528,20 @@ export default function PostDetail() {
         </Row>
       </div>
 
+      {/* 搜索匹配导航 */}
+      {(matchTotal > 1 || searchQuery) && !loading && (
+        <div style={{
+          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--warm-card)', border: '1px solid var(--warm-border)',
+          borderRadius: 20, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 12,
+          zIndex: 99, boxShadow: 'var(--warm-shadow)', fontSize: 13,
+        }}>
+          <Button size="small" type="text" onClick={() => jumpToMatch(-1)} disabled={matchIndex <= 0}>▲</Button>
+          <span style={{color:'var(--warm-muted)'}}>{matchTotal > 0 ? matchIndex + 1 : 0} / {matchTotal}</span>
+          <Button size="small" type="text" onClick={() => jumpToMatch(1)} disabled={matchIndex >= matchTotal - 1}>▼</Button>
+          <span style={{color:'var(--warm-brown)',fontSize:12}}>匹配</span>
+        </div>
+      )}
       {/* 底部浮动操作栏 */}
       {post && (
         <div style={{

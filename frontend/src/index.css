@@ -261,8 +261,10 @@ a:hover {
 }
 
 /* 搜索高亮 */
-mark, mark.search-hl { background: #FFF3CD; color: #8B5E3C; padding: 1px 4px; border-radius: 3px; }
+mark, mark.search-hl { background: #FFF3CD; color: #8B5E3C; padding: 1px 4px; border-radius: 3px; transition: background .2s; }
+mark.search-hl-active { background: #FFB347 !important; color: #4A3728 !important; }
 [data-theme="dark"] mark, [data-theme="dark"] mark.search-hl { background: #5C4A30; color: #E8C9A0; }
+[data-theme="dark"] mark.search-hl-active { background: #D4A574 !important; color: #1B1815 !important; }
 
 /* 卡片入场交错动画 */
 .card-stagger > *:nth-child(1) { animation-delay: 0.05s; }
