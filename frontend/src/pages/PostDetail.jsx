@@ -144,11 +144,19 @@ export default function PostDetail() {
         marks[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
         marks[0].classList.add('search-hl-active');
       }
-      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
     tid = setTimeout(doHighlight, 500);
     return () => clearTimeout(tid);
   }, [post?.id, searchQuery, loading]);
+
+  // F3 / Shift+F3 匹配导航
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'F3') { e.preventDefault(); jumpToMatch(e.shiftKey ? -1 : 1); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [matchIndex, matchTotal]);
 
   // 阅读进度
   useEffect(() => {
