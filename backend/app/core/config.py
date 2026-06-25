@@ -33,6 +33,21 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str = ""
     GITHUB_REDIRECT_URI: str = "http://localhost:5173/auth/github/callback"
 
+    # === 自动化配置 ===
+    AUTOMATION_ENABLED: bool = False
+
+    # 新闻摘要 (News Digest)
+    NEWS_SOURCES: str = '["https://news.ycombinator.com/rss"]'  # JSON list of RSS URLs
+    NEWS_SCHEDULE: str = "0 8 * * *"  # 每天早上8点
+
+    # GitHub Trending
+    GITHUB_TRENDING_SCHEDULE: str = "0 9 * * *"  # 每天早上9点
+
+    # Arxiv 论文
+    ARXIV_CATEGORIES: str = "cs.AI,cs.CL,cs.CV,cs.LG"
+    ARXIV_MAX_RESULTS: int = 20
+    ARXIV_SCHEDULE: str = "0 10 * * 1"  # 每周一上午10点
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

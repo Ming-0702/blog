@@ -80,3 +80,14 @@ export const usersAPI = {
     return api.post('/users/me/avatar', formData);
   },
 };
+
+// ===== 自动化 API =====
+export const automationAPI = {
+  listDigests: (params) => api.get('/automation/digests', { params }),
+  getDigest: (id) => api.get(`/automation/digests/${id}`),
+  listTrending: (params) => api.get('/automation/trending', { params }),
+  getTrendingRepo: (id) => api.get(`/automation/trending/${id}`),
+  listPapers: (params) => api.get('/automation/papers', { params }),
+  getPaper: (id) => api.get(`/automation/papers/${id}`),
+  getStatus: () => api.get('/automation/status'),
+};

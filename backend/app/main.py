@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.v1 import auth, users, posts, comments, likes, websocket
+from app.api.v1 import auth, users, posts, comments, likes, websocket, automation
 
 
 @asynccontextmanager
@@ -15,7 +15,11 @@ async def lifespan(app: FastAPI):
     # 启动时创建表
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # 初始化自动化调度器
+    from app.services.scheduler import init_scheduler, scheduler
+    init_scheduler()
     yield
+    scheduler.shutdown(wait=False)
     await engine.dispose()
 
 
@@ -41,6 +45,7 @@ app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(posts.router, prefix=API_PREFIX)
 app.include_router(comments.router, prefix=API_PREFIX)
 app.include_router(likes.router, prefix=API_PREFIX)
+app.include_router(automation.router, prefix=API_PREFIX)
 app.include_router(websocket.router)
 
 # 静态文件（头像等）

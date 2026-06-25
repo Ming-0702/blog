@@ -1,7 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Layout, Menu, Button, Dropdown, Space, Badge, Popover, List, message } from 'antd';
-import { UserOutlined, LogoutOutlined, EditOutlined, HomeOutlined, BellOutlined, SettingOutlined, ReadOutlined, ExperimentOutlined, SunOutlined, MoonOutlined, SearchOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, EditOutlined, HomeOutlined, BellOutlined, SettingOutlined, ReadOutlined, ExperimentOutlined, SunOutlined, MoonOutlined, SearchOutlined, RocketOutlined, FireOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { postsAPI } from '../api/client';
@@ -39,6 +39,9 @@ export default function Navbar() {
   const menuItems = [
     { key: '/', label: <Link to="/">首页</Link>, icon: <HomeOutlined /> },
     { key: '/posts', label: <Link to="/posts">文章</Link>, icon: <ReadOutlined /> },
+    { key: '/digests', label: <Link to="/digests">资讯摘要</Link>, icon: <RocketOutlined /> },
+    { key: '/trending', label: <Link to="/trending">AI趋势</Link>, icon: <FireOutlined /> },
+    { key: '/papers', label: <Link to="/papers">论文速递</Link>, icon: <ExperimentOutlined /> },
     { key: 'random', label: '随机一篇', icon: <ExperimentOutlined />, onClick: handleRandom },
   ];
 

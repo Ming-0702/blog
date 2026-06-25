@@ -12,6 +12,9 @@ import CreatePost from './pages/CreatePost';
 import EditPost from './pages/EditPost';
 import GitHubCallback from './pages/GitHubCallback';
 import UserSettings from './pages/UserSettings';
+import Digests from './pages/Digests';
+import Trending from './pages/Trending';
+import Papers from './pages/Papers';
 import './App.css';
 
 const { Content, Footer } = Layout;
@@ -47,6 +50,9 @@ function App() {
                 <Route path="/posts/:id/edit" element={<EditPost />} />
                 <Route path="/auth/github/callback" element={<GitHubCallback />} />
                 <Route path="/settings" element={<UserSettings />} />
+                <Route path="/digests" element={<Digests />} />
+                <Route path="/trending" element={<Trending />} />
+                <Route path="/papers" element={<Papers />} />
               </Routes>
             </Content>
             <Footer style={{
