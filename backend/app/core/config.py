@@ -46,7 +46,10 @@ class Settings(BaseSettings):
     # Arxiv 论文
     ARXIV_CATEGORIES: str = "cs.AI,cs.CL,cs.CV,cs.LG"
     ARXIV_MAX_RESULTS: int = 20
-    ARXIV_SCHEDULE: str = "0 10 * * 1"  # 每周一上午10点
+    ARXIV_SCHEDULE: str = "0 18 * * *"  # 每天下午6点
+
+    # 数据保留天数（超过自动清理）
+    AUTOMATION_RETENTION_DAYS: int = 15
 
     class Config:
         env_file = ".env"

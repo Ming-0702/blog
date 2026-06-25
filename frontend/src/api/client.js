@@ -85,9 +85,12 @@ export const usersAPI = {
 export const automationAPI = {
   listDigests: (params) => api.get('/automation/digests', { params }),
   getDigest: (id) => api.get(`/automation/digests/${id}`),
+  triggerDigests: () => api.post('/automation/digests/trigger'),
   listTrending: (params) => api.get('/automation/trending', { params }),
   getTrendingRepo: (id) => api.get(`/automation/trending/${id}`),
+  triggerTrending: () => api.post('/automation/trending/trigger'),
   listPapers: (params) => api.get('/automation/papers', { params }),
   getPaper: (id) => api.get(`/automation/papers/${id}`),
+  triggerPapers: () => api.post('/automation/papers/trigger'),
   getStatus: () => api.get('/automation/status'),
 };

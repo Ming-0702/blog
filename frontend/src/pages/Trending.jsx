@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Card, List, Pagination, Tag, Spin, Skeleton, Typography } from 'antd';
-import { StarOutlined, GithubOutlined, RobotOutlined, CalendarOutlined } from '@ant-design/icons';
+import { useEffect, useState, useCallback } from 'react';
+import { Card, List, Pagination, Tag, Spin, Skeleton, Typography, Button, message, DatePicker, Space } from 'antd';
+import { StarOutlined, GithubOutlined, RobotOutlined, CalendarOutlined, SyncOutlined, FireOutlined } from '@ant-design/icons';
 import { automationAPI } from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
+import dayjs from 'dayjs';
 
 const { Title, Paragraph } = Typography;
 
@@ -14,24 +16,77 @@ const LANG_COLORS = {
 export default function Trending() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [triggering, setTriggering] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [availableDates, setAvailableDates] = useState([]);
+  const { isAuthor } = useAuth();
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     setLoading(true);
-    automationAPI.listTrending({ page, page_size: 20 })
-      .then(r => { setItems(r.data?.items || []); setTotal(r.data?.total || 0); })
+    automationAPI.listTrending({ page, page_size: 20, date: selectedDate })
+      .then(r => {
+        setItems(r.data?.items || []);
+        setTotal(r.data?.total || 0);
+        setAvailableDates(r.data?.available_dates || []);
+      })
       .catch(() => {}).finally(() => setLoading(false));
-  }, [page]);
+  }, [page, selectedDate]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleTrigger = async () => {
+    setTriggering(true);
+    try {
+      const res = await automationAPI.triggerTrending();
+      message.success(res.msg || '抓取完成');
+      fetchData();
+    } catch (err) { message.error(err?.msg || '触发失败，请确认已登录作者账号'); }
+    finally { setTriggering(false); }
+  };
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 16px' }}>
-      <Title level={2} style={{ fontFamily: "'Noto Serif SC',serif", color: '#4A3728', marginBottom: 8 }}>
-        🔥 GitHub Trending 解读
-      </Title>
-      <Paragraph style={{ color: '#A0937D', marginBottom: 24 }}>
-        每日 GitHub Trending 仓库自动解读（AI 生成中文分析）
-      </Paragraph>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <Title level={2} style={{ fontFamily: "'Noto Serif SC',serif", color: '#4A3728', marginBottom: 8 }}>
+            <FireOutlined style={{ marginRight: 8, color: '#D4A574' }} />GitHub Trending 解读
+          </Title>
+          <Paragraph style={{ color: '#A0937D', marginBottom: 0 }}>
+            每日 GitHub Trending 仓库自动抓取与 AI 中文解读 · 每天 9:00 更新 · 保留 15 天
+          </Paragraph>
+        </div>
+        {isAuthor && (
+          <Button type="primary" icon={<SyncOutlined spin={triggering} />} loading={triggering}
+            onClick={handleTrigger}
+            style={{ background: '#8B5E3C', borderColor: '#8B5E3C', borderRadius: 8 }}>
+            触发抓取
+          </Button>
+        )}
+      </div>
+
+      <div style={{ marginTop: 24, marginBottom: 16 }}>
+        <DatePicker
+          value={selectedDate ? dayjs(selectedDate) : null}
+          onChange={(d) => { setSelectedDate(d ? d.format('YYYY-MM-DD') : ''); setPage(1); }}
+          placeholder="按日期筛选"
+          style={{ borderRadius: 8 }}
+          allowClear
+        />
+      </div>
+
+      {availableDates.length > 0 && !selectedDate && (
+        <div style={{ marginBottom: 16, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ color: '#A0937D', fontSize: 13, marginRight: 4 }}>📅 最近日期:</span>
+          {availableDates.slice(0, 10).map(d => (
+            <Tag key={d.date} color="#E8D5C4" style={{ cursor: 'pointer', borderRadius: 6, fontSize: 12 }}
+              onClick={() => { setSelectedDate(d.date); setPage(1); }}>
+              {d.date} ({d.count})
+            </Tag>
+          ))}
+        </div>
+      )}
 
       {loading && items.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -39,7 +94,8 @@ export default function Trending() {
         </div>
       ) : items.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 60, color: '#A0937D' }}>
-          暂无 Trending 数据，请先启用自动化并触发抓取
+          {selectedDate ? `${selectedDate} 暂无数据` : '暂无 Trending 数据'}<br />
+          {isAuthor && <Button type="link" onClick={handleTrigger} loading={triggering} style={{ marginTop: 12 }}>点击触发首次抓取</Button>}
         </div>
       ) : (
         <List dataSource={items} renderItem={item => (

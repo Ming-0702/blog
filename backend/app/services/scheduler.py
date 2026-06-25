@@ -54,6 +54,30 @@ async def _initial_fetch():
     await ArxivFetcher().run()
 
 
+async def _cleanup_old_data():
+    """清理超过保留期限的数据"""
+    from datetime import date, timedelta
+    from app.core.config import settings
+    from app.core.database import async_session
+    from sqlalchemy import delete
+    from app.models.digest import NewsDigest
+    from app.models.trending import TrendingRepo
+    from app.models.paper import PaperDigest
+
+    retention = settings.AUTOMATION_RETENTION_DAYS
+    cutoff = date.today() - timedelta(days=retention)
+
+    async with async_session() as db:
+        r1 = await db.execute(delete(NewsDigest).where(NewsDigest.created_at < cutoff))
+        r2 = await db.execute(delete(TrendingRepo).where(TrendingRepo.fetched_date < cutoff))
+        r3 = await db.execute(delete(PaperDigest).where(PaperDigest.created_at < cutoff))
+        await db.commit()
+        total = (r1.rowcount or 0) + (r2.rowcount or 0) + (r3.rowcount or 0)
+        if total:
+            import logging
+            logging.getLogger(__name__).info(f"Cleanup: deleted {total} records older than {retention} days")
+
+
 def init_scheduler():
     """初始化并启动调度器。在 FastAPI lifespan startup 中调用。"""
     from app.core.config import settings
@@ -82,6 +106,14 @@ def init_scheduler():
         ArxivFetcher().run,
         **_parse_cron(settings.ARXIV_SCHEDULE),
         id="arxiv_papers",
+        replace_existing=True,
+    )
+
+    # 注册数据清理任务（每天凌晨 3 点）
+    scheduler.add_job(
+        _cleanup_old_data,
+        trigger="cron", hour=3, minute=0,
+        id="cleanup_old_data",
         replace_existing=True,
     )
 
