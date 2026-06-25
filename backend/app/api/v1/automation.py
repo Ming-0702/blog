@@ -1,7 +1,7 @@
 """自动化内容 API 路由"""
 from datetime import date, timedelta
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func, desc, cast, Date
+from sqlalchemy import select, func, desc, cast, Date, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -91,8 +91,10 @@ async def trigger_digests(
 ):
     """手动触发新闻摘要抓取（作者专用）"""
     from app.services.news_fetcher import NewsFetcher
-    result = await NewsFetcher().run()
-    return success(result)
+    r = await NewsFetcher().run()
+    if r["status"] == "error":
+        return fail(f"抓取失败: {r['message']}", status_code=500)
+    return success(r, msg=f"抓取完成: {r['message']}")
 
 
 # ==================== GitHub Trending ====================
@@ -148,8 +150,10 @@ async def trigger_trending(
 ):
     """手动触发 GitHub Trending 抓取（作者专用）"""
     from app.services.github_fetcher import GithubFetcher
-    result = await GithubFetcher().run()
-    return success(result)
+    r = await GithubFetcher().run()
+    if r["status"] == "error":
+        return fail(f"抓取失败: {r['message']}", status_code=500)
+    return success(r, msg=f"抓取完成: {r['message']}")
 
 
 # ==================== 论文摘要 ====================
@@ -167,8 +171,8 @@ async def list_papers(
     total_q = select(func.count()).select_from(PaperDigest)
 
     if category:
-        q = q.where(PaperDigest.categories.contains([category]))
-        total_q = total_q.where(PaperDigest.categories.contains([category]))
+        q = q.where(PaperDigest.categories.cast(String).like(f'%"{category}"%'))
+        total_q = total_q.where(PaperDigest.categories.cast(String).like(f'%"{category}"%'))
     if date:
         q = q.where(cast(PaperDigest.published_date, Date) == date)
         total_q = total_q.where(cast(PaperDigest.published_date, Date) == date)
@@ -211,8 +215,10 @@ async def trigger_papers(
 ):
     """手动触发论文抓取（作者专用）"""
     from app.services.arxiv_fetcher import ArxivFetcher
-    result = await ArxivFetcher().run()
-    return success(result)
+    r = await ArxivFetcher().run()
+    if r["status"] == "error":
+        return fail(f"抓取失败: {r['message']}", status_code=500)
+    return success(r, msg=f"抓取完成: {r['message']}")
 
 
 # ==================== 状态 ====================

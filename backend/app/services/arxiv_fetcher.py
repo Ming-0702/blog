@@ -10,7 +10,10 @@ from app.models.paper import PaperDigest
 from app.services.base_fetcher import BaseAutomationFetcher
 from app.services.ai_processor import ai_chat
 
-import lxml.etree as ET
+try:
+    import lxml.etree as ET  # type: ignore
+except ImportError:
+    import xml.etree.ElementTree as ET  # 回退到标准库
 
 logger = logging.getLogger(__name__)
 
