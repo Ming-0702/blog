@@ -13,8 +13,20 @@ from app.models.user import User
 from app.models.digest import NewsDigest
 from app.models.trending import TrendingRepo
 from app.models.paper import PaperDigest
+from app.schemas.automation import DigestOut, TrendingRepoOut, PaperOut
 
 router = APIRouter(prefix="/automation", tags=["自动化"])
+
+
+def _serialize(item):
+    """将 ORM 对象转为可 JSON 序列化的 dict"""
+    if isinstance(item, NewsDigest):
+        return DigestOut.model_validate(item).model_dump(mode="json")
+    if isinstance(item, TrendingRepo):
+        return TrendingRepoOut.model_validate(item).model_dump(mode="json")
+    if isinstance(item, PaperDigest):
+        return PaperOut.model_validate(item).model_dump(mode="json")
+    return item
 
 
 # ==================== 新闻摘要 ====================
@@ -44,9 +56,8 @@ async def list_digests(
 
     offset = (page - 1) * page_size
     result = await db.execute(q.offset(offset).limit(page_size))
-    items = result.scalars().all()
+    items = [_serialize(r) for r in result.scalars().all()]
 
-    # 汇总有数据的日期
     dates_result = await db.execute(
         select(cast(NewsDigest.published_date, Date).label("d"), func.count())
         .where(NewsDigest.published_date.isnot(None))
@@ -71,7 +82,7 @@ async def get_digest(digest_id: int, db: AsyncSession = Depends(get_db)):
     item = result.scalar_one_or_none()
     if not item:
         return fail("摘要不存在", status_code=404)
-    return success(item)
+    return success(_serialize(item))
 
 
 @router.post("/digests/trigger")
@@ -103,9 +114,8 @@ async def list_trending(
     total = (await db.execute(total_q)).scalar() or 0
     offset = (page - 1) * page_size
     result = await db.execute(q.offset(offset).limit(page_size))
-    items = result.scalars().all()
+    items = [_serialize(r) for r in result.scalars().all()]
 
-    # 汇总有数据的日期
     dates_result = await db.execute(
         select(TrendingRepo.fetched_date, func.count())
         .group_by(TrendingRepo.fetched_date)
@@ -129,7 +139,7 @@ async def get_trending(repo_id: int, db: AsyncSession = Depends(get_db)):
     item = result.scalar_one_or_none()
     if not item:
         return fail("仓库不存在", status_code=404)
-    return success(item)
+    return success(_serialize(item))
 
 
 @router.post("/trending/trigger")
@@ -166,9 +176,8 @@ async def list_papers(
     total = (await db.execute(total_q)).scalar() or 0
     offset = (page - 1) * page_size
     result = await db.execute(q.offset(offset).limit(page_size))
-    items = result.scalars().all()
+    items = [_serialize(r) for r in result.scalars().all()]
 
-    # 汇总有数据的日期
     dates_result = await db.execute(
         select(cast(PaperDigest.published_date, Date).label("d"), func.count())
         .where(PaperDigest.published_date.isnot(None))
@@ -193,7 +202,7 @@ async def get_paper(paper_id: int, db: AsyncSession = Depends(get_db)):
     item = result.scalar_one_or_none()
     if not item:
         return fail("论文不存在", status_code=404)
-    return success(item)
+    return success(_serialize(item))
 
 
 @router.post("/papers/trigger")
