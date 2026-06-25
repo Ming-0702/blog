@@ -103,30 +103,39 @@ async def search_posts(q: str, db: AsyncSession = Depends(get_db)):
     )
     posts = result.unique().scalars().all()
 
-    def snippet(text, keyword):
-        if not text: return ""
-        idx = text.lower().find(keyword.lower())
-        if idx == -1: return text[:200]
-        start = max(0, idx - 60)
-        end = min(len(text), idx + len(keyword) + 100)
-        snip = text[start:end]
-        if start > 0: snip = "..." + snip
-        if end < len(text): snip = snip + "..."
-        # 高亮
+    def make_snippets(text, keyword, max_n=3):
+        """提取多处匹配上下文"""
+        if not text or not keyword: return []
         import re as _re
-        snip = _re.sub(f"({_re.escape(keyword)})", r"<mark>\1</mark>", snip, flags=_re.IGNORECASE)
-        return snip
+        kw = _re.escape(keyword)
+        results, last_end = [], 0
+        for m in _re.finditer(kw, text, _re.IGNORECASE):
+            idx = m.start()
+            if idx < last_end: continue
+            start, end = max(0, idx - 50), min(len(text), idx + len(keyword) + 70)
+            snip = text[start:end]
+            if start > 0: snip = "..." + snip
+            if end < len(text): snip = snip + "..."
+            snip = _re.sub(f"({kw})", r"<mark>\1</mark>", snip, flags=_re.IGNORECASE)
+            results.append(snip)
+            last_end = end
+            if len(results) >= max_n: break
+        return results
 
     items = []
+    import re as _re
     for p in posts:
         d = _post_list_out(p)
-        keyword = q.strip()
-        if keyword.lower() in (p.title or "").lower():
-            d["highlight"] = "title"
-        elif keyword.lower() in (p.content or "").lower():
-            d["snippet"] = snippet(p.content, keyword)
-        elif keyword.lower() in (p.summary or "").lower():
-            d["snippet"] = snippet(p.summary, keyword)
+        kw = q.strip()
+        kw_lower = kw.lower()
+        title_hit = kw_lower in (p.title or "").lower()
+        snips = make_snippets(p.content, kw)
+        if not snips and p.summary:
+            snips = make_snippets(p.summary, kw)
+        d["title_match"] = title_hit
+        d["snippets"] = snips
+        d["match_count"] = len(_re.findall(_re.escape(kw), p.content or "", _re.IGNORECASE))
+        d["match_count"] += 1 if title_hit else 0
         items.append(d)
     return success(items)
 

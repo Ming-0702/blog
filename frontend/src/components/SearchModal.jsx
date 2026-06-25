@@ -60,13 +60,13 @@ export default function SearchModal({ open, onClose }) {
                 avatar={<FileTextOutlined style={{ fontSize: 18, color: '#8B5E3C', marginTop: 4 }} />}
                 title={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>{post.title}</span>}
                 description={<>
-                  {post.highlight === 'title' ? (
-                    <Text type="secondary" style={{ fontSize: 13, color: '#D4A574' }}>标题匹配</Text>
-                  ) : post.snippet ? (
-                    <Text ellipsis style={{ fontSize: 13 }}>
-                      <span dangerouslySetInnerHTML={{ __html: post.snippet }} />
-                    </Text>
-                  ) : (
+                  {post.title_match && <Text style={{ fontSize: 12, color: '#D4A574' }}>标题匹配 · {post.match_count} 处</Text>}
+                  {post.snippets?.map((s, i) => (
+                    <div key={i} style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--warm-muted)', marginTop: 4, borderLeft: '2px solid var(--warm-border)', paddingLeft: 8 }}>
+                      <span dangerouslySetInnerHTML={{ __html: s }} />
+                    </div>
+                  ))}
+                  {!post.title_match && !post.snippets?.length && (
                     <Text ellipsis type="secondary" style={{ fontSize: 13 }}>{post.summary}</Text>
                   )}
                   {post.tags?.length > 0 && <div style={{ marginTop: 4 }}>
