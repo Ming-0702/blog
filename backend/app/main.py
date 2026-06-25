@@ -15,11 +15,17 @@ async def lifespan(app: FastAPI):
     # 启动时创建表
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    # 初始化自动化调度器
-    from app.services.scheduler import init_scheduler, scheduler
-    init_scheduler()
+    # 初始化自动化调度器（失败不影响博客正常运行）
+    scheduler = None
+    try:
+        from app.services.scheduler import init_scheduler, scheduler
+        init_scheduler()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Scheduler init failed: {e}")
     yield
-    scheduler.shutdown(wait=False)
+    if scheduler:
+        scheduler.shutdown(wait=False)
     await engine.dispose()
 
 

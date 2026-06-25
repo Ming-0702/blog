@@ -3,7 +3,6 @@ from app.services.ai_processor import ai_chat
 from app.services.base_fetcher import BaseAutomationFetcher
 from app.services.news_fetcher import NewsFetcher
 from app.services.github_fetcher import GithubFetcher
-from app.services.arxiv_fetcher import ArxivFetcher
 from app.services.scheduler import scheduler, init_scheduler
 
 __all__ = [
@@ -11,7 +10,6 @@ __all__ = [
     "BaseAutomationFetcher",
     "NewsFetcher",
     "GithubFetcher",
-    "ArxivFetcher",
     "scheduler",
     "init_scheduler",
 ]
